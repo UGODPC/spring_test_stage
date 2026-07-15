@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -36,8 +37,8 @@ class SecurityConfig {
                         requests
                                 .requestMatchers(HttpMethod.POST, "/login", "/register").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/messages").permitAll() // Pour test
-                                .anyRequest().permitAll() //authenticated() pour une fois que le JWT est configuré !
-                );
+                                .anyRequest().authenticated() //authenticated() pour une fois que le JWT est configuré !
+                ).addFilterBefore(new JwtAuthFilter(userAuthProvider), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
