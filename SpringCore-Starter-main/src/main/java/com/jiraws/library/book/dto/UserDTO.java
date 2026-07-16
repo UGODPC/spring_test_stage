@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 public class UserDTO {
     @Data
     @AllArgsConstructor
@@ -16,5 +18,7 @@ public class UserDTO {
         private String lastName;
         private String login;
         private String token;
+        private List<String> roles;
+        private List<String> permissions;
     }
 }

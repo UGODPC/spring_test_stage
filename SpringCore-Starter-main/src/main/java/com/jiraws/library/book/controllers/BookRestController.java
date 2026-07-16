@@ -59,6 +59,7 @@ public class BookRestController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('BOOK_READ')")
     public ResponseEntity<BookEntity> getBookById(@PathVariable Long id)
     {
         ResponseEntity<BookEntity> rep = bookService.getBookById(id);
@@ -67,7 +68,7 @@ public class BookRestController {
     }
 
     @PostMapping
-    //@PreAuthorize("hasRole('ADMIN') or hasAuthority('BOOK_CREATE')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('BOOK_CREATE')")
     public String post(@RequestBody BookDTO.PostInput input)
     {
         log.info(input.getBookName()); //Déjà un String donc l'afficher direct.
@@ -79,7 +80,7 @@ public class BookRestController {
     }
 
     @PutMapping("/update/{id}")
-    //@PreAuthorize("hasRole('ADMIN') or hasAuthority('BOOK_UPDATE')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('BOOK_UPDATE')")
     public String update(@PathVariable Long id, @RequestBody BookDTO.PostInput input)
     {
         BookEntity updatedBook = bookService.updateBook(id, input.getBookName(), input.getBookPages());
@@ -88,7 +89,7 @@ public class BookRestController {
     }
 
     @DeleteMapping("/delete/{id}")
-    //@PreAuthorize("hasRole('ADMIN') or hasAuthority('BOOK_DELETE')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('BOOK_DELETE')")
     public String delete(@PathVariable Long id)
     {
         bookService.deleteBook(id);

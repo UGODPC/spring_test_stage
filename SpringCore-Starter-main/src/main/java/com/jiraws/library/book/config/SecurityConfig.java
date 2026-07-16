@@ -32,13 +32,15 @@ class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // ← ACTIVER CORS
                 //.addFilterBefore(new JwtAuthFilter(userAuthProvider), BasicAuthenticationFilter.class)
+                .addFilterBefore(new JwtAuthFilter(userAuthProvider), UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement(customizer -> customizer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests((requests) ->
                         requests
                                 .requestMatchers(HttpMethod.POST, "/login", "/register").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/messages").permitAll() // Pour test
+                                .requestMatchers(HttpMethod.GET, "/messages").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/book/**").permitAll() //Pour que tout utilisateur puisse GET les livres.
                                 .anyRequest().authenticated() //authenticated() pour une fois que le JWT est configuré !
-                ).addFilterBefore(new JwtAuthFilter(userAuthProvider), UsernamePasswordAuthenticationFilter.class);
+                );
         return http.build();
     }
 

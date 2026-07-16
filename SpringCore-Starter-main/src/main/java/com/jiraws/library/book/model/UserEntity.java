@@ -10,6 +10,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -40,11 +41,13 @@ public class UserEntity implements UserDetails {
 
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
-    private Set<Role> roles;
+    @Builder.Default
+    private Set<Role> roles = new HashSet<>(); //HashSet = Collection de Rôles et chaque élément est unique
 
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
-    private Set<Permission> permissions;
+    @Builder.Default
+    private Set<Permission> permissions = new HashSet<>(); //HashSet = Collection de Rôles et chaque élément est unique
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -52,11 +55,14 @@ public class UserEntity implements UserDetails {
         List<SimpleGrantedAuthority> roleAuthorities = roles.stream()
                 .map(role -> new SimpleGrantedAuthority(role.name()))
                 .collect(Collectors.toList());
+        //Créer une liste d'objets SimpleGrantedAuthority qui va prendre le résultat du
+        //stream de la liste des rôles qui va mapper les rôles en de véritable objets SimpleGrantedAuthority
 
         // Convertir les permissions en authorities
         List<SimpleGrantedAuthority> permissionAuthorities = permissions.stream()
                 .map(permission -> new SimpleGrantedAuthority(permission.name()))
                 .collect(Collectors.toList());
+        //Pareil que pour les rôles au dessus
 
         roleAuthorities.addAll(permissionAuthorities);
         return roleAuthorities;
