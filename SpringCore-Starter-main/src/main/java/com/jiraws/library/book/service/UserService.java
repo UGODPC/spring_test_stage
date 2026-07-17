@@ -5,7 +5,6 @@ import com.jiraws.library.book.dto.SignUpDTO;
 import com.jiraws.library.book.dto.UserDTO;
 import com.jiraws.library.book.exceptions.AppException;
 import com.jiraws.library.book.mappers.UserMapper;
-import com.jiraws.library.book.model.BookEntity;
 import com.jiraws.library.book.model.Permission;
 import com.jiraws.library.book.model.Role;
 import com.jiraws.library.book.model.UserEntity;
@@ -15,7 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.nio.CharBuffer;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -40,67 +39,73 @@ public class UserService
         throw new AppException("Mot de passe invalide", HttpStatus.BAD_REQUEST);
     }
 
-    public UserDTO.PostInput register(SignUpDTO signUpDTO)
-    {
+    public UserDTO.PostInput register(SignUpDTO signUpDTO) {
         Optional<UserEntity> oUser = userRepository.findByLogin(signUpDTO.getLogin());
 
-        if (oUser.isPresent())
-        {
+        if (oUser.isPresent()) {
             throw new AppException("Le compte existe déjà !", HttpStatus.BAD_REQUEST);
         }
 
         UserEntity user = userMapper.signUpToUser(signUpDTO);
         user.setPassword(passwordEncoder.encode(signUpDTO.getPassword()));
 
-        user.setRoles(Set.of(Role.ROLE_GUEST)); //Set prend la forme d'une liste sans doublons.
-        user.setPermissions(Set.of(
-                Permission.BOOK_READ
-                //Permission.BOOK_CREATE,
-                //Permission.BOOK_UPDATE,
-                //Permission.BOOK_DELETE
-        )); //Au moment de la création de compte, l'utilisateur aura le droit de performer les actions si-dessus...
+        // ❌ AVANT (problème) :
+        // user.setRoles(Set.of(Role.ROLE_GUEST));
+
+        // ✅ APRÈS (corrigé) :
+        Set<Role> roles = new HashSet<>();
+        roles.add(Role.ROLE_GUEST);
+        user.setRoles(roles);
+
+        Set<Permission> permissions = new HashSet<>();
+        permissions.add(Permission.BOOK_READ);
+        user.setPermissions(permissions);
 
         UserEntity savedUser = userRepository.save(user);
         return userMapper.toUserDTO(savedUser);
     }
 
-    public UserDTO.PostInput promoteGuestToUser(String login)
-    {
-        UserEntity user = userRepository.findByLogin(login).orElseThrow(() -> new AppException("Utilisateur inconnu", HttpStatus.BAD_REQUEST));
+    public UserDTO.PostInput promoteGuestToUser(String login) {
+        UserEntity user = userRepository.findByLogin(login)
+                .orElseThrow(() -> new AppException("Utilisateur inconnu", HttpStatus.NOT_FOUND));
 
-        if(!user.getRoles().contains(Role.ROLE_GUEST))
-        {
+        if (!user.getRoles().contains(Role.ROLE_GUEST)) {
             throw new AppException("L'utilisateur n'est pas un GUEST", HttpStatus.BAD_REQUEST);
         }
 
-        user.setRoles(Set.of(Role.ROLE_USER));
-        user.setPermissions(Set.of(
-                Permission.BOOK_READ,
-                Permission.BOOK_CREATE
-        ));
+        Set<Role> roles = new HashSet<>();
+        roles.add(Role.ROLE_USER);
+        user.setRoles(roles);
+
+        Set<Permission> permissions = new HashSet<>();
+        permissions.add(Permission.BOOK_READ);
+        permissions.add(Permission.BOOK_CREATE);
+        user.setPermissions(permissions);
 
         UserEntity savedUser = userRepository.save(user);
         return userMapper.toUserDTO(savedUser);
     }
 
-    public UserDTO.PostInput promoteUserToAdmin(String login)
-    {
-        UserEntity user = userRepository.findByLogin(login).orElseThrow(() -> new AppException("Utilisateur inconnu", HttpStatus.NOT_FOUND));
+    public UserDTO.PostInput promoteUserToAdmin(String login) {
+        UserEntity user = userRepository.findByLogin(login)
+                .orElseThrow(() -> new AppException("Utilisateur inconnu", HttpStatus.NOT_FOUND));
 
-        if (!user.getRoles().contains(Role.ROLE_USER))
-        {
+        if (!user.getRoles().contains(Role.ROLE_USER)) {
             throw new AppException("L'utilisateur n'est pas un USER", HttpStatus.BAD_REQUEST);
         }
 
-        user.setRoles(Set.of(Role.ROLE_ADMIN));
-        user.setPermissions(Set.of(
-                Permission.BOOK_READ,
-                Permission.BOOK_CREATE,
-                Permission.BOOK_UPDATE,
-                Permission.BOOK_DELETE,
-                Permission.USER_READ,
-                Permission.USER_CREATE
-        ));
+        Set<Role> roles = new HashSet<>();
+        roles.add(Role.ROLE_ADMIN);
+        user.setRoles(roles);
+
+        Set<Permission> permissions = new HashSet<>();
+        permissions.add(Permission.BOOK_READ);
+        permissions.add(Permission.BOOK_CREATE);
+        permissions.add(Permission.BOOK_UPDATE);
+        permissions.add(Permission.BOOK_DELETE);
+        permissions.add(Permission.USER_READ);
+        permissions.add(Permission.USER_CREATE);
+        user.setPermissions(permissions);
 
         UserEntity savedUser = userRepository.save(user);
         return userMapper.toUserDTO(savedUser);
