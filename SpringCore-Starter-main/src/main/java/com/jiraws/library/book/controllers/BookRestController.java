@@ -52,6 +52,7 @@ public class BookRestController {
     }
 
     @GetMapping("/liste")
+    @PreAuthorize("hasAuthority('BOOK_READ')")
     public List<BookEntity> get()
     {
         List<BookEntity> maListe = bookService.getAllBooks();

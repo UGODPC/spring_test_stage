@@ -4,14 +4,15 @@ import com.jiraws.library.book.config.UserAuthProvider;
 import com.jiraws.library.book.dto.CredentialsDTO;
 import com.jiraws.library.book.dto.SignUpDTO;
 import com.jiraws.library.book.dto.UserDTO;
+import com.jiraws.library.book.exceptions.AppException;
 import com.jiraws.library.book.model.Permission;
 import com.jiraws.library.book.model.Role;
 import com.jiraws.library.book.model.UserEntity;
 import com.jiraws.library.book.service.UserService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.stream.Collectors;
@@ -58,5 +59,29 @@ public class AuthController {
         UserDTO.PostInput user = userService.register(signUpDTO);
         user.setToken(userAuthProvider.createToken(user));
         return ResponseEntity.created(URI.create("/users/" + user.getId())).body(user);
+    }
+    @PostMapping("/promote/{login}")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasAuthority('USER_CREATE')")
+    public ResponseEntity<UserDTO.PostInput> promoteUser(@PathVariable String login, @RequestParam String targetRole)
+    {
+        UserDTO.PostInput user;
+
+        if("USER".equalsIgnoreCase(targetRole))
+        {
+            user = userService.promoteGuestToUser(login);
+        }
+        else if("ADMIN".equalsIgnoreCase(targetRole))
+        {
+            user = userService.promoteUserToAdmin(login);
+        }
+        else
+        {
+            throw new AppException("Rôle cible invalide", HttpStatus.BAD_REQUEST);
+        }
+
+        //Régénérer un nouveau token avec les nouveaux droits
+        user.setToken(userAuthProvider.createToken(user));
+
+        return ResponseEntity.ok(user);
     }
 }
