@@ -41,7 +41,7 @@ public class UserAuthProvider {
     public String createToken(UserDTO.PostInput userDTO)
     {
         Date now = new Date();
-        Date validity = new Date(now.getTime() + 3_600_000);
+        Date validity = new Date(now.getTime() + 7_200_000);
 
         UserEntity user = userRepository.findByLogin(userDTO.getLogin()).orElseThrow(() -> new AppException("Utilisateur inconnu", HttpStatus.NOT_FOUND));
 
